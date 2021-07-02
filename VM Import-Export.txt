@@ -1,0 +1,89 @@
+Convert VMDK, OVA & OVF Files to AMI
+
+https://www.youtube.com/watch?v=Jmjcl-MWC6w&t=1s
+
+https://aws.amazon.com/premiumsupport/knowledge-center/import-server-ec2-instance/
+
+
+Step 1
+
+trust-policys.json(Save file as)
+
+{
+   "Version": "2012-10-17",
+   "Statement": [
+      {
+         "Effect": "Allow",
+         "Principal": { "Service": "vmie.amazonaws.com" },
+         "Action": "sts:AssumeRole",
+         "Condition": {
+            "StringEquals":{
+               "sts:Externalid": "vmimport"
+            }
+         }
+      }
+   ]
+}
+
+Step 2
+
+aws iam create-role --role-name vmimport --assume-role-policy-document C:\Users\abc\Desktop\OVF Format\trust-policy.json" 
+
+Step 3
+
+role-policys.json(Save file as)
+
+{
+   "Version":"2012-10-17",
+   "Statement":[
+      {
+         "Effect":"Allow",
+         "Action":[
+            "s3:GetBucketLocation",
+            "s3:GetObject",
+            "s3:ListBucket" 
+         ],
+         "Resource":[
+            "arn:aws:s3:::vmimageslabs",
+            "arn:aws:s3:::vmimageslabs/*"
+         ]
+      },
+      {
+         "Effect":"Allow",
+         "Action":[
+            "ec2:ModifySnapshotAttribute",
+            "ec2:CopySnapshot",
+            "ec2:RegisterImage",
+            "ec2:Describe*"
+         ],
+         "Resource":"*"
+      }
+   ]
+}
+
+Step 4
+
+aws iam put-role-policy --role-name vmimport --policy-name vmimport --policy-document "file://C:\Users\abc\Desktop\OVF Format\role-policy.json"
+
+
+Step 5
+
+Containers.json(Save file as)
+[
+  {
+    "Description": "centosv7 Desktop",
+    "Format": "vmdk",
+    "UserBucket": {
+        "S3Bucket": "vmimageslabs",
+        "S3Key": "IJOS-19.a-Desktop-Kit5-disk1.vmdk"
+    }
+	}
+]
+
+Step 6
+
+aws ec2 import-image --description "centosv7 Desktop" --license-type byol --disk-containers "file://C:\abc\Desktop\OVF Format\containers.json"
+
+Step 7
+
+aws ec2 describe-import-image-tasks --import-task-ids import-ami-0520c8c92b2289193
